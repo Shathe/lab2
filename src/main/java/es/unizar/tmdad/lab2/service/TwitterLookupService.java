@@ -1,5 +1,6 @@
 package es.unizar.tmdad.lab2.service;
 
+import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
@@ -7,18 +8,25 @@ import org.springframework.stereotype.Service;
 
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 
+import es.unizar.tmdad.lab2.configuration.Configuracion;
+
 @Service
 public class TwitterLookupService {
 
-	private final ConcurrentMap<String, String> connections = new ConcurrentLinkedHashMap.Builder<String, String>()
+	private final ConcurrentMap<String, Configuracion> connections = new ConcurrentLinkedHashMap.Builder<String, Configuracion>()
 			.maximumWeightedCapacity(10).build();
 
-	public void search(String query) {
-		connections.putIfAbsent(query, query);
+	public void search(String query, String dificultad, String restriccion) {
+		Configuracion nueva =  new Configuracion( query, dificultad, restriccion);
+		connections.putIfAbsent(nueva.toString(), nueva);
 	}
 	
-	public Set<String> getQueries() {
+	public Set<String> getClaveSubscripciones() {
 		return connections.keySet();
+	}
+	
+	public Collection<Configuracion> getConfiguraciones() {
+		return connections.values();
 	}
 	
 }

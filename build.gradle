@@ -39,6 +39,9 @@ dependencies {
     compile("org.springframework.boot:spring-boot-starter-social-twitter")
     compile("org.springframework.boot:spring-boot-starter-thymeleaf")
     compile("org.springframework.boot:spring-boot-starter-websocket")
+    compile("org.springframework:spring-jdbc")
+    compile("org.springframework.boot:spring-boot-starter-jdbc")
+    compile("com.h2database:h2")
     compile("org.springframework.boot:spring-boot-starter-integration")
     compile("org.springframework:spring-messaging")
     compile("org.springframework.integration:spring-integration-java-dsl:1.2.1.RELEASE")
@@ -77,4 +80,7 @@ task zip(type:Zip) {
 	filter { line -> line.startsWith('twitter.consumerSecret=') ? 'twitter.consumerSecret=<<ask Twitter for a key>>' : line }
 	filter { line -> line.startsWith('twitter.accessToken=') ? 'twitter.accessToken=<<ask Twitter for a key>>' : line }
 	filter { line -> line.startsWith('twitter.accessTokenSecret=') ? 'twitter.accessTokenSecret=<<ask Twitter for a key>>' : line }
+}
+task stage {
+    dependsOn build
 }

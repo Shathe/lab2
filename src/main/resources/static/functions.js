@@ -1,45 +1,62 @@
-var subscription = null;
-var newQuery = 0;
-
-function registerTemplate() {
-	var template = $("#template").html();
-	Mustache.parse(template);
-}
-
-function setConnected(connected) {
-	var search = $('#submitsearch');
-	search.prop('disabled', !connected);
-}
-
-function registerSendQueryAndConnect() {
-    var socket = new SockJS("/twitter");
-    var stompClient = Stomp.over(socket);
-    stompClient.connect({}, function(frame) {
-        setConnected(true);
-        console.log('Connected: ' + frame);
-    });
-	$("#search").submit(
-			function(event) {
-				event.preventDefault();
-				if (subscription) {
-					subscription.unsubscribe();
-				}
-				var query = $("#q").val();
-				stompClient.send("/app/search", {}, query);
-				newQuery = 1;
-				subscription = stompClient.subscribe("/queue/search/" + query, function(data) {
-					var resultsBlock = $("#resultsBlock");
-					if (newQuery) {
-                        resultsBlock.empty();
-						newQuery = 0;
-					}
-					var tweet = JSON.parse(data.body);
-                    resultsBlock.prepend(Mustache.render(template, tweet));
-				});
-			});
-}
+var ws;
+var client;
+var subscription;
 
 $(document).ready(function() {
-	registerTemplate();
-	registerSendQueryAndConnect();
+	initConn();
 });
+
+var app = angular.module('myApp', []);
+app.controller('myCtrl', function($scope) {
+	// Inicializar los tweets
+	$scope.tweets = [];
+	// si se pide una busqueda
+	this.getTweets = function() {
+		if (subscription != undefined) {
+			// si ya estabas subscrito a anteriores busquedas te desuscribes
+			// (solo una abierta a la vez)
+			subscription.unsubscribe();
+			$scope.tweets = [];
+		}
+
+		var query = $("#q").val();
+		var dificultad = $("#dificultad").val();
+		var restriccion = $("#restriccion").val();
+		claveSubscripcion = query+"-"+dificultad+"-"+restriccion;
+
+		client.send("/app/search", {}, claveSubscripcion);
+		// Te subscribes a la busqueda. La funcion se ejecuta cuando el servidor
+		// envia algo por la cola subscrita
+
+		console.log(claveSubscripcion);
+		subscription = client.subscribe("/queue/search/" +  claveSubscripcion, function(
+				mensaje) {
+			var data = JSON.parse(mensaje.body);
+			$scope.tweets.unshift(data);
+			$scope.$apply();
+		}, {
+			id : query
+		});
+
+	};
+});
+
+/*
+ * Iniciarlizar la conexion con el servidor con el endpoint (del websocket)
+ * llamado twitter
+ */
+function initConn() {
+	ws = new SockJS("/twitter");
+	client = Stomp.over(ws);
+	var headers = {};
+
+	var connect_callback = function() {
+		// called back after the client is connected and authenticated to the
+		// STOMP server
+	};
+	var error_callback = function(error) {
+		// display the error's message header:
+		console.log(error);
+	};
+	client.connect(headers, connect_callback, error_callback);
+}
