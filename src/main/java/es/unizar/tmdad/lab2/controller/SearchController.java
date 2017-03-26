@@ -42,7 +42,7 @@ public class SearchController {
 	public ResponseEntity search(@RequestParam("q") String query, @RequestParam("restriccion") String restriccion,
 			@RequestParam("dificultad") String dificultad, Model m) {
 		System.out.println("Tweets en BD: " + tweetRepository.count());
-		List <TweetBD> listaTweets = tweetRepository.findByQuery(query);
+		List <TweetBD> listaTweets = tweetRepository.findByQueryOrderByIdDesc(query);
 		System.out.println("lista: " + listaTweets.size());
 		ArrayList <Tweet> tweets = new ArrayList <Tweet> (listaTweets.size());
 		Tweet newTweet = null;/*

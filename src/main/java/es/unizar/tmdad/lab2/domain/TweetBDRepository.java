@@ -6,5 +6,5 @@ import org.springframework.data.repository.CrudRepository;
 
 public interface TweetBDRepository extends CrudRepository<TweetBD, Long> {
 
-	List<TweetBD> findByQuery(String query);
+	List<TweetBD> findByQueryOrderByIdDesc(String query);
 }

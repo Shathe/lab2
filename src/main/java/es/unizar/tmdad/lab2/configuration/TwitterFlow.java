@@ -49,25 +49,21 @@ public class TwitterFlow {
 	// componente "streamSendingService"
 	@Bean
 	public IntegrationFlow sendTweet() {
-        //
-        // CAMBIOS A REALIZAR:
-        //
-        // Usando Spring Integration DSL
-        //
-        // Filter --> asegurarnos que el mensaje es un Tweet
-        // Transform --> convertir un Tweet en un TargetedTweet con tantos tópicos como coincida
-        // Split --> dividir un TargetedTweet con muchos tópicos en tantos TargetedTweet como tópicos haya
-        // Transform --> señalar el contenido de un TargetedTweet
-        //
 		
 		return IntegrationFlows.from(requestChannel()).filter(tuit -> tuit instanceof Tweet).// Filter --> asegurarnos que el mensaje es un Tweet
 				<Tweet,TargetedTweet>transform(tuit -> 
 				{	MyTweet tweet = new MyTweet(tuit); 
 					example = tuit;
 					List<String> topics = twitterlookupService.getClaveSubscripciones().stream().filter(clave -> tweet.getText().contains((clave.split("-"))[0])).collect(Collectors.toList());
+					//topics que coinciden con la query. ahora guardar el tweet 
+					ArrayList<String> queries =  new ArrayList<String>();
 					topics.forEach(topic -> {
-						tweetRepository.save(new TweetBD(topic.split("-")[0], tuit.getFromUser(), tuit.getIdStr(), tuit.getText()));
-						System.out.println("query saved:" + topic.split("-")[0] + ", topic:" + topic);
+						String nuevaQuery = topic.split("-")[0];
+						if(!queries.contains(nuevaQuery))queries.add(nuevaQuery);
+					});
+					queries.forEach(query -> {
+						tweetRepository.save(new TweetBD(query, tuit.getFromUser(), tuit.getIdStr(), tuit.getText()));
+						System.out.println("query saved:" + query);
 						System.out.println("Tweets en BD: " + tweetRepository.count());
 						
 					});
@@ -77,10 +73,10 @@ public class TwitterFlow {
 							tuit.getTargets().forEach(q -> 
 								{	tweets.add(new TargetedTweet(tuit.getTweet(),q));
 								}); return tweets;// Split --> dividir un TargetedTweet con muchos tópicos en tantos TargetedTweet como tópicos haya
-					}).<TargetedTweet,TargetedTweet>transform(tuit -> 
+					})/*.<TargetedTweet,TargetedTweet>transform(tuit -> 
 						{		tuit.getTweet().setUnmodifiedText(tuit.getTweet().getText().replace((tuit.getFirstTarget().split("-"))[0], "<b>" + (tuit.getFirstTarget().split("-"))[0] + "</b>"));
 								return tuit;
-						}).handle("streamSendingService", "sendTweet").get();// Transform --> señalar el contenido de un TargetedTweet
+						})*/.handle("streamSendingService", "sendTweet").get();// Transform --> señalar el contenido de un TargetedTweet
 		
 	}
 

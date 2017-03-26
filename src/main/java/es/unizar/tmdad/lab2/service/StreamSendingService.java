@@ -27,6 +27,7 @@ import java.util.function.Consumer;
 import javax.annotation.PostConstruct;
 
 import es.unizar.tmdad.lab2.domain.TargetedTweet;
+import es.unizar.tmdad.lab2.service.StreamSendingServiceDificultad;
 
 @Service
 public class StreamSendingService {
@@ -47,7 +48,11 @@ public class StreamSendingService {
 	private StreamListener integrationStreamListener;
 
 	@Autowired
+	private StreamSendingServiceDificultad dificultadService;
+
+	@Autowired
 	JdbcTemplate jdbcTemplate;
+	
 	
 	@PostConstruct
 	public void initialize() {
@@ -118,7 +123,9 @@ public class StreamSendingService {
     }
 		
 		if(aceptado){
-			
+			//StreamSendingServiceDificultad controller = (StreamSendingServiceDificultad) context.getBean("employeeController");
+			dificultadService.sendTweet(tweet);
+			/*
 			ops.convertAndSend("/queue/search/" + tweet.getFirstTarget(),
 					tweet.getTweet(),mapa);
 			System.out.println("sendTweet TargetedTweet: " + tweet.getTweet().getText());
@@ -127,6 +134,7 @@ public class StreamSendingService {
 					(tweet.getFirstTarget().split("-"))[1], (tweet.getFirstTarget().split("-"))[2]);
 			opsDB.addTweet(tweet.getTweet().getText(), idConf);
 			System.out.println("insertado idconfig: " + idConf);
+			*/
 		}
 
 
