@@ -10,7 +10,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 import dataBase.opsDatabase;
-
+import es.unizar.tmdad.lab2.domain.TweetBDRepository;
 
 /**
  * Server application
@@ -29,7 +29,9 @@ public class Application implements CommandLineRunner {
 
 	@Autowired
 	JdbcTemplate jdbcTemplate;
-
+	@Autowired
+	private TweetBDRepository tweetRepository;
+	
 	@Override
 	public void run(String... strings) throws Exception {
 
@@ -46,12 +48,7 @@ public class Application implements CommandLineRunner {
 
 		//opsDatabase ops = new opsDatabase(jdbcTemplate);
 		//ops.addConfiguracion("hola", "facil", "normal");
-		
-		/*
-		// Inserts
-		jdbcTemplate.update("insert into userCrawlers (nick, email, contrasena) values (?,?, ?)", "inigo",
-				"inigol22zgz@gmail.com", ops.HashFunction("contrasena"));
-				*/
+
 
 	}
 }

@@ -19,6 +19,8 @@ import org.springframework.social.twitter.api.Tweet;
 
 import es.unizar.tmdad.lab2.domain.MyTweet;
 import es.unizar.tmdad.lab2.domain.TargetedTweet;
+import es.unizar.tmdad.lab2.domain.TweetBD;
+import es.unizar.tmdad.lab2.domain.TweetBDRepository;
 import es.unizar.tmdad.lab2.service.TwitterLookupService;
 
 @Configuration
@@ -27,8 +29,14 @@ import es.unizar.tmdad.lab2.service.TwitterLookupService;
 @ComponentScan
 public class TwitterFlow {
 	
+	private Tweet example = null;
+	
 	@Autowired
 	private TwitterLookupService twitterlookupService;
+	
+
+	@Autowired
+	private TweetBDRepository tweetRepository;
 	
 	@Bean
 	public DirectChannel requestChannel() {
@@ -54,8 +62,15 @@ public class TwitterFlow {
 		
 		return IntegrationFlows.from(requestChannel()).filter(tuit -> tuit instanceof Tweet).// Filter --> asegurarnos que el mensaje es un Tweet
 				<Tweet,TargetedTweet>transform(tuit -> 
-				{	MyTweet tweet = new MyTweet(tuit);
+				{	MyTweet tweet = new MyTweet(tuit); 
+					example = tuit;
 					List<String> topics = twitterlookupService.getClaveSubscripciones().stream().filter(clave -> tweet.getText().contains((clave.split("-"))[0])).collect(Collectors.toList());
+					topics.forEach(topic -> {
+						tweetRepository.save(new TweetBD(topic.split("-")[0], tuit.getFromUser(), tuit.getIdStr(), tuit.getText()));
+						System.out.println("query saved:" + topic.split("-")[0] + ", topic:" + topic);
+						System.out.println("Tweets en BD: " + tweetRepository.count());
+						
+					});
 					return new TargetedTweet(tweet,topics); // Transform --> convertir un Tweet en un TargetedTweet con tantos tópicos como coincida
 				}).split(TargetedTweet.class, tuit -> 
 					{		List<TargetedTweet> tweets = new ArrayList<TargetedTweet>(tuit.getTargets().size());
@@ -72,7 +87,7 @@ public class TwitterFlow {
 }
 
 // Segundo paso
-// Los mensajes recibidos por este @MessagingGateway se dejan en el canal "requestChannel"
+// Los mensajes recibidos por este @MessagingGateway se dejan en el canal	"requestChannel"
 @MessagingGateway(name = "integrationStreamListener", defaultRequestChannel = "requestChannel")
 interface MyStreamListener extends StreamListener {
 

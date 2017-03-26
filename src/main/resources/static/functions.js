@@ -4,6 +4,8 @@ var subscription;
 
 $(document).ready(function() {
 	initConn();
+	checkBox = document.getElementById('history');
+    checkBox.checked = false;
 });
 
 var app = angular.module('myApp', []);
@@ -18,25 +20,42 @@ app.controller('myCtrl', function($scope) {
 			subscription.unsubscribe();
 			$scope.tweets = [];
 		}
+		if(document.getElementById('history').checked){
+  		    console.log("history checked");
 
-		var query = $("#q").val();
-		var dificultad = $("#dificultad").val();
-		var restriccion = $("#restriccion").val();
-		claveSubscripcion = query+"-"+dificultad+"-"+restriccion;
+	        $.get('/search',{q: $("#q").val(), restriccion: $("#restriccion").val(), dificultad: $("#dificultad").val()})
+	        .done(function(data, status) {
+	  		    console.log(data);
+	            $scope.tweets=data;
+	            $scope.$apply();
+	        })
+	        .fail(function(data, status) {
+	          console.log(data);
+	        });
+	        
+		}else{
+  		    console.log("history NO checked");
 
-		client.send("/app/search", {}, claveSubscripcion);
-		// Te subscribes a la busqueda. La funcion se ejecuta cuando el servidor
-		// envia algo por la cola subscrita
+			var query = $("#q").val();
+			var dificultad = $("#dificultad").val();
+			var restriccion = $("#restriccion").val();
+			claveSubscripcion = query+"-"+dificultad+"-"+restriccion;
 
-		console.log(claveSubscripcion);
-		subscription = client.subscribe("/queue/search/" +  claveSubscripcion, function(
-				mensaje) {
-			var data = JSON.parse(mensaje.body);
-			$scope.tweets.unshift(data);
-			$scope.$apply();
-		}, {
-			id : query
-		});
+			client.send("/app/search", {}, claveSubscripcion);
+			// Te subscribes a la busqueda. La funcion se ejecuta cuando el servidor
+			// envia algo por la cola subscrita
+
+			console.log(claveSubscripcion);
+			subscription = client.subscribe("/queue/search/" +  claveSubscripcion, function(
+					mensaje) {
+				var data = JSON.parse(mensaje.body);
+				$scope.tweets.unshift(data);
+				$scope.$apply();
+			}, {
+				id : query
+			});
+		}
+		
 
 	};
 });

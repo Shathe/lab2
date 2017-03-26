@@ -6,14 +6,18 @@ import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.social.twitter.api.FilterStreamParameters;
 import org.springframework.social.twitter.api.Stream;
-import org.springframework.social.twitter.api.StreamListener;
-import org.springframework.social.twitter.api.Tweet;
 import org.springframework.social.twitter.api.impl.TwitterTemplate;
+
+import org.springframework.social.twitter.api.StreamDeleteEvent;
+import org.springframework.social.twitter.api.StreamListener;
+import org.springframework.social.twitter.api.StreamWarningEvent;
+import org.springframework.social.twitter.api.Tweet;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MimeTypeUtils;
 
 import dataBase.opsDatabase;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -79,21 +83,51 @@ public class StreamSendingService {
 	}
 
 	public void sendTweet(TargetedTweet tweet) {
-		//
-		// CAMBIOS A REALIZAR:
-		//
 		// Crea un mensaje que envie un tweet a un único tópico destinatario
-		//
+		
 		Map<String, Object> mapa = new HashMap<>();
 		mapa.put(MessageHeaders.CONTENT_TYPE, MimeTypeUtils.APPLICATION_JSON);
-		ops.convertAndSend("/queue/search/" + tweet.getFirstTarget(),
-				tweet.getTweet(),mapa);
-		System.out.println("sendTweet TargetedTweet: " + tweet.getTweet().getText());
-		opsDatabase opsDB = new opsDatabase(jdbcTemplate);
-		Long idConf = opsDB.getIdConfiguracion((tweet.getFirstTarget()).split("-")[0], 
-				(tweet.getFirstTarget().split("-"))[1], (tweet.getFirstTarget().split("-"))[2]);
-		opsDB.addTweet(tweet.getTweet().getText(), idConf);
-		System.out.println("insertado idconfig: " + idConf);
+		String[] claves = tweet.getFirstTarget().split("-");
+		String query = claves[0];
+		String dificultad = claves[1];
+		String restriccion = claves[2];
+		boolean aceptado = false;
+		String [] palabras = tweet.getTweet().getText().split(" ");
+		ArrayList <String> palabrasValidas = new ArrayList <String>();
+		for (int i = 0; i<palabras.length ; i++){
+			if(!palabras[i].contains("@") && !palabras[i].contains("#") && !palabras[i].contains("http"))palabrasValidas.add(palabras[i]);
+		}
+		switch (restriccion) {
+        case "poco restrictivo":
+        	// mas de 25 letras dentro de ellas, vale
+        	if(tweet.getTweet().getText().length() > 20)aceptado = true;
+                 break;
+        case "normal": 
+        	//Si tiene mas de 3 palabras no hashtags ni menciones ni links y no links y mas de 25 letras dentro de ellas, vale
+        	if(tweet.getTweet().getText().length() > 25 && palabrasValidas.size() > 5)aceptado = true;
+
+                 break;
+        case "muy restrictivo":  
+        	//Si tiene mas de 8 palabras no hashtags  ni menciones ni links y no links y mas de 80 letras dentro de ellas, vale
+        	if(tweet.getTweet().getText().length() > 80 && palabrasValidas.size() > 11)aceptado = true;
+
+                 break;
+      
+        default: ;
+                 break;
+    }
+		
+		if(aceptado){
+			
+			ops.convertAndSend("/queue/search/" + tweet.getFirstTarget(),
+					tweet.getTweet(),mapa);
+			System.out.println("sendTweet TargetedTweet: " + tweet.getTweet().getText());
+			opsDatabase opsDB = new opsDatabase(jdbcTemplate);
+			Long idConf = opsDB.getIdConfiguracion((tweet.getFirstTarget()).split("-")[0], 
+					(tweet.getFirstTarget().split("-"))[1], (tweet.getFirstTarget().split("-"))[2]);
+			opsDB.addTweet(tweet.getTweet().getText(), idConf);
+			System.out.println("insertado idconfig: " + idConf);
+		}
 
 
 	}
