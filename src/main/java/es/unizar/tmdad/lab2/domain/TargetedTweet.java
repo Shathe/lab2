@@ -1,9 +1,10 @@
 package es.unizar.tmdad.lab2.domain;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 
-public class TargetedTweet {
+public class TargetedTweet implements Serializable {
 	
 	private MyTweet tweet;
 	

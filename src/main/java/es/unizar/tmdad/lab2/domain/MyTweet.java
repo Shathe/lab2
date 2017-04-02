@@ -1,5 +1,6 @@
 package es.unizar.tmdad.lab2.domain;
 
+import java.io.Serializable;
 import java.util.Date;
 import java.util.Map;
 
@@ -7,7 +8,7 @@ import org.springframework.social.twitter.api.Entities;
 import org.springframework.social.twitter.api.Tweet;
 import org.springframework.social.twitter.api.TwitterProfile;
 
-public class MyTweet {
+public class MyTweet implements  Serializable {
 
 	private Tweet tweet;
 	

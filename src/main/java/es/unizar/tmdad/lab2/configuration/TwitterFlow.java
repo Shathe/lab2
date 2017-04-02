@@ -1,6 +1,14 @@
 package es.unizar.tmdad.lab2.configuration;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import com.rabbitmq.client.ConnectionFactory;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.Channel;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -16,6 +24,11 @@ import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.integration.dsl.IntegrationFlows;
 import org.springframework.social.twitter.api.StreamListener;
 import org.springframework.social.twitter.api.Tweet;
+import org.springframework.util.SerializationUtils;
+
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.ConnectionFactory;
 
 import es.unizar.tmdad.lab2.domain.MyTweet;
 import es.unizar.tmdad.lab2.domain.TargetedTweet;
@@ -30,6 +43,17 @@ import es.unizar.tmdad.lab2.service.TwitterLookupService;
 public class TwitterFlow {
 	
 	private Tweet example = null;
+
+	private final static String EXCHANGE_NAME = "TweetChooser";
+	private final static String SAVER_NAME = "TweetSaver";
+	private final static String ENV_AMQPURL_NAME = "CLOUDAMQP_URL";
+	ConnectionFactory factory = null;
+	String amqpURL = null;
+
+	Connection connection = null;
+	// Con un solo canal
+	Channel channel = null;
+	Channel channel2 = null;
 	
 	@Autowired
 	private TwitterLookupService twitterlookupService;
@@ -49,6 +73,30 @@ public class TwitterFlow {
 	// componente "streamSendingService"
 	@Bean
 	public IntegrationFlow sendTweet() {
+		if(channel==null){
+			//inicializar el cana
+			factory = new ConnectionFactory();
+			amqpURL = System.getenv().get(ENV_AMQPURL_NAME) != null ? System.getenv().get(ENV_AMQPURL_NAME)
+					: "amqp://localhost";
+			try {
+				factory.setUri(amqpURL);
+				System.out.println("  [*] AQMP broker found in " + amqpURL);
+				connection = factory.newConnection();
+				// Con un solo canal
+				channel = connection.createChannel();
+				channel2 = connection.createChannel();
+
+				
+				// Declaramos una centralita de tipo fanout llamada EXCHANGE_NAME
+				channel.exchangeDeclare(EXCHANGE_NAME, "fanout");
+				channel2.exchangeDeclare(SAVER_NAME, "fanout");
+			} catch (Exception e) {
+				System.out.println("Chooser [*] AQMP broker not found in " + amqpURL);
+				System.exit(-1);
+			}
+
+			
+		}
 		
 		return IntegrationFlows.from(requestChannel()).filter(tuit -> tuit instanceof Tweet).// Filter --> asegurarnos que el mensaje es un Tweet
 				<Tweet,TargetedTweet>transform(tuit -> 
@@ -62,25 +110,55 @@ public class TwitterFlow {
 						if(!queries.contains(nuevaQuery))queries.add(nuevaQuery);
 					});
 					queries.forEach(query -> {
-						tweetRepository.save(new TweetBD(query, tuit.getFromUser(), tuit.getIdStr(), tuit.getText()));
-						System.out.println("query saved:" + query);
-						System.out.println("Tweets en BD: " + tweetRepository.count());
+						try{
+							byte[] data = SerializationUtils.serialize(new TweetBD(query, tuit.getFromUser(), tuit.getIdStr(), tuit.getText()));
+							channel.basicPublish(SAVER_NAME, "", null, data);		
+						}catch(Exception a){
+							System.out.println(	"error al enviar: " + a.toString() );
+						}
 						
 					});
 					return new TargetedTweet(tweet,topics); // Transform --> convertir un Tweet en un TargetedTweet con tantos tópicos como coincida
 				}).split(TargetedTweet.class, tuit -> 
 					{		List<TargetedTweet> tweets = new ArrayList<TargetedTweet>(tuit.getTargets().size());
 							tuit.getTargets().forEach(q -> 
-								{	tweets.add(new TargetedTweet(tuit.getTweet(),q));
-								}); return tweets;// Split --> dividir un TargetedTweet con muchos tópicos en tantos TargetedTweet como tópicos haya
-					})/*.<TargetedTweet,TargetedTweet>transform(tuit -> 
-						{		tuit.getTweet().setUnmodifiedText(tuit.getTweet().getText().replace((tuit.getFirstTarget().split("-"))[0], "<b>" + (tuit.getFirstTarget().split("-"))[0] + "</b>"));
-								return tuit;
-						})*/.handle("streamSendingService", "sendTweet").get();// Transform --> señalar el contenido de un TargetedTweet
+								{	tweets.add(new TargetedTweet(tuit.getTweet(),q));								
+								
+							
+							});
+							tweets.forEach(publicacion -> {
+								try{
+									byte[] data = SerializationUtils.serialize(publicacion);
+									channel.basicPublish(EXCHANGE_NAME, "", null, data);		
+									System.out.println(	"ENVIADO" );
+
+								}catch(Exception a){
+									System.out.println(	"error al enviar: " + a.toString() );
+								}
+								System.out.println("LLEGA: " + publicacion.getTweet().getText() + " --- " + publicacion.getFirstTarget() );
+								
+								});
+							return tweets;// Split --> dividir un TargetedTweet con muchos tópicos en tantos TargetedTweet como tópicos haya
+					}).handle("TwitterFlow", "publishTweet").get();// Transform --> señalar el contenido de un TargetedTweet
+					//		
+
 		
 	}
-
+	
+	public static byte[] serialize(Object obj) throws IOException {
+	    ByteArrayOutputStream out = new ByteArrayOutputStream();
+	    ObjectOutputStream os = new ObjectOutputStream(out);
+	    os.writeObject(obj);
+	    os.flush();
+	    out.close();
+	    return out.toByteArray();
+	}
+	public void publishTweet(TargetedTweet tweet){
+		System.out.println("LLEGA");
+	}
 }
+
+
 
 // Segundo paso
 // Los mensajes recibidos por este @MessagingGateway se dejan en el canal	"requestChannel"
