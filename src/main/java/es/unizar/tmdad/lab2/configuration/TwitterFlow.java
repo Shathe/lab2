@@ -80,7 +80,7 @@ public class TwitterFlow {
 					: "amqp://localhost";
 			try {
 				factory.setUri(amqpURL);
-				System.out.println("  [*] AQMP broker found in " + amqpURL);
+				System.out.println("TweeetChooser [*] AQMP broker found in " + amqpURL);
 				connection = factory.newConnection();
 				// Con un solo canal
 				channel = connection.createChannel();
@@ -114,7 +114,7 @@ public class TwitterFlow {
 							byte[] data = SerializationUtils.serialize(new TweetBD(query, tuit.getFromUser(), tuit.getIdStr(), tuit.getText()));
 							channel.basicPublish(SAVER_NAME, "", null, data);		
 						}catch(Exception a){
-							System.out.println(	"error al enviar: " + a.toString() );
+							System.out.println(	"error al enviar chooser-> tweetSaver: " + a.toString() );
 						}
 						
 					});
@@ -130,12 +130,11 @@ public class TwitterFlow {
 								try{
 									byte[] data = SerializationUtils.serialize(publicacion);
 									channel.basicPublish(EXCHANGE_NAME, "", null, data);		
-									System.out.println(	"ENVIADO" );
+									System.out.println(	"ENVIADO chooser-> tweetprocesor1: "+ publicacion.getTweet().getUnmodifiedText() );
 
 								}catch(Exception a){
 									System.out.println(	"error al enviar: " + a.toString() );
 								}
-								System.out.println("LLEGA: " + publicacion.getTweet().getText() + " --- " + publicacion.getFirstTarget() );
 								
 								});
 							return tweets;// Split --> dividir un TargetedTweet con muchos tópicos en tantos TargetedTweet como tópicos haya

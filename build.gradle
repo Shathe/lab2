@@ -38,7 +38,8 @@ dependencies {
     compile 'org.springframework:spring-messaging'
 
     compile("org.springframework.boot:spring-boot-starter-web")
-    
+	compile("org.springframework.boot:spring-boot-starter-security")
+    compile("org.springframework.security.oauth:spring-security-oauth2:2.0.8.RELEASE")    
     compile("org.springframework.boot:spring-boot-starter-social-twitter")
     compile("org.springframework.boot:spring-boot-starter-thymeleaf")
     compile("org.springframework.boot:spring-boot-starter-websocket")

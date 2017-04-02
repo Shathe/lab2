@@ -88,7 +88,7 @@ public class TweetSaver {
 			try {
 				factory.setUri(amqpURL);
 
-				System.out.println("TweetProcesor1 [*] AQMP broker found in " + amqpURL);
+				System.out.println("TweetSaver [*] AQMP broker found in " + amqpURL);
 				connection = factory.newConnection();
 				// Con un solo canal
 				channel = connection.createChannel();

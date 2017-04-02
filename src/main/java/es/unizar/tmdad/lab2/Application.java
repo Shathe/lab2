@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.security.oauth2.client.EnableOAuth2Sso;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
@@ -18,6 +19,7 @@ import es.unizar.tmdad.lab2.domain.TweetBDRepository;
 
 @Component
 @SpringBootApplication
+@EnableOAuth2Sso
 public class Application implements CommandLineRunner {
 
 	private static final Logger log = LoggerFactory.getLogger(Application.class);
@@ -26,6 +28,7 @@ public class Application implements CommandLineRunner {
 		SpringApplication.run(Application.class, args);
 		
 	}
+	
 
 	@Autowired
 	JdbcTemplate jdbcTemplate;

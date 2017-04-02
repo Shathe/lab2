@@ -103,7 +103,7 @@ public class StreamSendingService {
 				// una unión (binding) entre ellas (la clave de enrutado
 				// la ponemos vacía, porque se va a ignorar)	
 				channel.queueBind(queueName, EXCHANGE_NAME, "");
-				channel2.queueBind(queueName, PROCESSOR_NAME, "");
+				channel2.queueBind(queueName2, PROCESSOR_NAME, "");
 				
 				MyExecutor myExec = new MyExecutor();
 				  myExec.execute(new Runnable() {
@@ -119,7 +119,7 @@ public class StreamSendingService {
 									// bloquea hasta que llege un mensaje 
 									QueueingConsumer.Delivery delivery = consumer.nextDelivery();
 									TargetedTweet tweetT = (TargetedTweet) SerializationUtils.deserialize(delivery.getBody());
-									System.out.println(" [x] Recibido ");
+									System.out.println(" [x] Recibido TC -TP1 ");
 									sendTweet(tweetT);
 								}
 				        		
@@ -209,6 +209,7 @@ public class StreamSendingService {
 			try{
 				byte[] data = SerializationUtils.serialize(tweet);
 				channel2.basicPublish(PROCESSOR_NAME, "", null, data);
+				System.out.println("SEND: TP1 -> TP2 ");
 
 			}
 			catch(Exception a){}

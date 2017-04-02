@@ -111,9 +111,11 @@ public class StreamSendingServiceDificultad {
 
 								while (true) {
 									// bloquea hasta que llege un mensaje 
+									System.out.println("esperando a recibir TP2 ");
+
 									QueueingConsumer.Delivery delivery = consumer.nextDelivery();
 									TargetedTweet tweetT = (TargetedTweet) SerializationUtils.deserialize(delivery.getBody());
-									System.out.println(" [x] Recibido2 ");
+									System.out.println("Recibido TP1-> TP2 ");
 									sendTweet(tweetT);
 								}
 				        		
@@ -244,12 +246,12 @@ public class StreamSendingServiceDificultad {
 		}
 
 		ops.convertAndSend("/queue/search/" + tweet.getFirstTarget(), tweet.getTweet(), mapa);
-		System.out.println("sendTweet TargetedTweet: " + tweet.getTweet().getText());
+		System.out.println("CLIENTE <- TP2: " + tweet.getTweet().getText());
+		System.out.println("CLIENTE <- TP2: : " + tweet.getFirstTarget().split("-")[0]);
 		opsDatabase opsDB = new opsDatabase(jdbcTemplate);
 		Long idConf = opsDB.getIdConfiguracion((tweet.getFirstTarget()).split("-")[0],
 				(tweet.getFirstTarget().split("-"))[1], (tweet.getFirstTarget().split("-"))[2]);
 		opsDB.addTweet(tweet.getTweet().getText(), idConf);
-		System.out.println("insertado idconfig: " + idConf);
 
 	}
 
