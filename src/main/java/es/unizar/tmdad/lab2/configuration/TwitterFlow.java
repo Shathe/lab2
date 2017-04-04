@@ -84,12 +84,11 @@ public class TwitterFlow {
 				connection = factory.newConnection();
 				// Con un solo canal
 				channel = connection.createChannel();
-				channel2 = connection.createChannel();
 
 				
 				// Declaramos una centralita de tipo fanout llamada EXCHANGE_NAME
 				channel.exchangeDeclare(EXCHANGE_NAME, "fanout");
-				channel2.exchangeDeclare(SAVER_NAME, "fanout");
+				channel.exchangeDeclare(SAVER_NAME, "fanout");
 			} catch (Exception e) {
 				System.out.println("Chooser [*] AQMP broker not found in " + amqpURL);
 				System.exit(-1);
@@ -144,14 +143,6 @@ public class TwitterFlow {
 		
 	}
 	
-	public static byte[] serialize(Object obj) throws IOException {
-	    ByteArrayOutputStream out = new ByteArrayOutputStream();
-	    ObjectOutputStream os = new ObjectOutputStream(out);
-	    os.writeObject(obj);
-	    os.flush();
-	    out.close();
-	    return out.toByteArray();
-	}
 	public void publishTweet(TargetedTweet tweet){
 		System.out.println("LLEGA");
 	}

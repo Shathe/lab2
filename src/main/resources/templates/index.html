@@ -31,6 +31,8 @@
 	<script src="stomp.js"></script>
     <script th:src="@{/functions.js}" src="../static/functions.js"></script>
     <!-- Latest compiled and minified JavaScript -->
+    <script type="text/javascript" src="/webjars/angularjs/angular.min.js"></script>
+
 </head>
 <body ng-app="myApp" ng-controller="myCtrl as controlador">
 
@@ -39,7 +41,7 @@
     <div class="navbar-header">
         <p class="navbar-brand">Cliente MVC Twitter</p>
         <p class="navbar-text">Desarrollo de Aplicaciones Distribuidas
-            2015-2016</p>
+            2016-2017</p>
     </div>
     <div class="nav navbar-right">
         <a title="UNIZAR" href="http://www.unizar.es"><img height="50"
@@ -47,6 +49,16 @@
                                                            alt=""/></a>
     </div>
 </nav>
+<div class="container" ng-show="!authenticated">
+	Login with: <a href="/login">Facebook</a>
+</div>
+<div class="container" ng-show="authenticated">
+	Logged in as: <span ng-bind="user"></span>
+	  <div>
+    <button ng-click="controlador.logout()" class="btn btn-primary">Logout</button>
+  </div>
+</div>
+
 <div class="container">
     <!-- Formulario principal -->
     <form id="search" ng-submit="controlador.getTweets()">
